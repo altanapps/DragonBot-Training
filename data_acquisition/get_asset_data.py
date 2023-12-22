@@ -4,6 +4,7 @@ import requests
 import sys
 import datetime
 import os
+from time import sleep
 sys.path.append('../pytorch-model')
 
 from constants import API_URL, TIME_START, EXCHANGE
@@ -22,8 +23,8 @@ def get_asset_data(asset_name_one="", asset_name_two="", ):
     
     # Start with the first timestamp
     time = TIME_START
+    # TODO: Likely, this will run out requests, so for that you should probably get a PAID COINAPI_KEY
     try:
-        # TODO: Likely, this will run out requests, so for that you should probably get a PAID COINAPI_KEY
         while True:
             # Get the data from the API
             url = (API_URL + f"{EXCHANGE}_{asset_name_one}_{asset_name_two}"
@@ -36,12 +37,12 @@ def get_asset_data(asset_name_one="", asset_name_two="", ):
             # Check if the request was successful
             if r.status_code != 200:
                 raise ValueError(f"Request failed with status code {r.status_code}")
-            
+                
             # If there is no csv file, create one
             if not os.path.isfile(f"./data/{asset_name_one}_{asset_name_two}_pricedata.csv"):
-                with open(f"{asset_name_one}_{asset_name_two}_pricedata.csv", "w") as f:
+                with open(f"./data/{asset_name_one}_{asset_name_two}_pricedata.csv", "w") as f:
                     f.write("time_period_start,time_period_end,time_open,time_close,price_open,price_high,price_low,price_close,volume_traded,trades_count\n")
-            
+                
             # Write the data to the csv file
             with open(f"./data/{asset_name_one}_{asset_name_two}_pricedata.csv", "a") as f:
                 for line in r.json():
@@ -56,11 +57,12 @@ def get_asset_data(asset_name_one="", asset_name_two="", ):
             else:
                 # Get the last record's time
                 time = r.json()[-1]['time_period_end']
+            
+            # Sleep for 1 second to avoid getting rate limited
+            sleep(1)
     except:
-        print("There are no more records to get")
-        print("Check that data is rightly constructed in the data/ folder and latest data is retrieved")
-        print("If not, delete the data/ folder and run the script again")
-
+        print("An error occurred")
+        raise
 if __name__ == '__main__':
     # Load the environment variables§
     load_dotenv()
