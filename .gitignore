@@ -1,2 +1,5 @@
 **/.DS_Store
 .DS_Store
+*.env
+data_acquisition/__pycache__/**
+data/**
