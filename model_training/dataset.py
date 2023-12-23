@@ -7,10 +7,11 @@ from torch.utils.data import DataLoader
 
 class NearDataset(torch.utils.data.Dataset):
 
-    def __init__(self, directory="./data/", sequence_length=10, filename="NEAR_USDT_pricedata_processed.csv", target_column="near_nexthourprice"):
+    def __init__(self, directory="./data/", sequence_length=10, filename="NEAR_USDT_pricedata_processed.csv", target_column="near_nexthourprice", test_size = 0.2):
         self.sequence_length = sequence_length # This is only applicable if you are using LSTM
         self.target_column = target_column
         self.features = ["price_open", "price_high", "price_low", "price_close", "volume_traded", "trades_count", "year", "day_of_week", "hour_of_day"]
+        self.test_size = test_size
         self.df = pd.read_csv(directory + filename)  
         self._preprocessing_data(target_column)
         self._create_sequences()
@@ -41,6 +42,12 @@ class NearDataset(torch.utils.data.Dataset):
             label = self.df.iloc[i+self.sequence_length][self.target_column]
             sequences.append((sequence, label))
         self.sequences = sequences
+
+    def train_test_split(self):
+        train_size = int(len(self) * (1 - self.test_size))
+        test_size = len(self) - train_size
+        train_dataset, test_dataset = torch.utils.data.random_split(self, [train_size, test_size])
+        return train_dataset, test_dataset
 
     def __len__(self):
         return len(self.sequences)

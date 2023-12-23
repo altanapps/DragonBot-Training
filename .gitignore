@@ -2,4 +2,6 @@
 .DS_Store
 *.env
 data_acquisition/__pycache__/**
+model_training/__pycache__/**
+model_training/models/**
 data/**
