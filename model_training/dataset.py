@@ -2,14 +2,16 @@ import pandas as pd
 import torch
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
+from torch.utils.data import DataLoader
 
 
 class NearDataset(torch.utils.data.Dataset):
 
-    def __init__(self, directory="./data/", sequence_length=10, filename="NEAR_USDT_pricedata_processed.csv", target_column="near_nexthourprice"):
+    def __init__(self, directory="./data/", sequence_length=10, filename="NEAR_USDT_pricedata_processed.csv", target_column="near_nexthourprice", test_size = 0.2):
         self.sequence_length = sequence_length # This is only applicable if you are using LSTM
         self.target_column = target_column
         self.features = ["price_open", "price_high", "price_low", "price_close", "volume_traded", "trades_count", "year", "day_of_week", "hour_of_day"]
+        self.test_size = test_size
         self.df = pd.read_csv(directory + filename)  
         self._preprocessing_data(target_column)
         self._create_sequences()
@@ -41,6 +43,12 @@ class NearDataset(torch.utils.data.Dataset):
             sequences.append((sequence, label))
         self.sequences = sequences
 
+    def train_test_split(self):
+        train_size = int(len(self) * (1 - self.test_size))
+        test_size = len(self) - train_size
+        train_dataset, test_dataset = torch.utils.data.random_split(self, [train_size, test_size])
+        return train_dataset, test_dataset
+
     def __len__(self):
         return len(self.sequences)
 
@@ -48,9 +56,27 @@ class NearDataset(torch.utils.data.Dataset):
         sequence, label = self.sequences[idx]
         return torch.tensor(sequence.values), torch.tensor(label)
     
-
+# Test the dataset
 if __name__ == "__main__":
-    # Initialize a NEAR dataset
+    # Initialize the dataset
     near_dataset = NearDataset()
 
+    # Check initial few rows after preprocessing
+    print("Processed Data:")
     print(near_dataset.df.head())
+
+    # Check length of the dataset
+    print("Total Sequences:", len(near_dataset))
+
+    # Inspect a few sequences
+    for i in range(2):
+        sequence, label = near_dataset[i]
+        print(f"Sequence {i} Shape: {sequence.shape}, Label: {label}")
+
+    # Test with DataLoader
+    data_loader = DataLoader(near_dataset, batch_size=32, shuffle=True)
+    for batch in data_loader:
+        sequences, labels = batch
+        print("Batch of Sequences Shape:", sequences.shape)
+        print("Batch of Labels Shape:", labels.shape)
+        break  # Just to check the first batch
