@@ -2,6 +2,7 @@ import pandas as pd
 import torch
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
+from torch.utils.data import DataLoader
 
 
 class NearDataset(torch.utils.data.Dataset):
@@ -48,9 +49,27 @@ class NearDataset(torch.utils.data.Dataset):
         sequence, label = self.sequences[idx]
         return torch.tensor(sequence.values), torch.tensor(label)
     
-
+# Test the dataset
 if __name__ == "__main__":
-    # Initialize a NEAR dataset
+    # Initialize the dataset
     near_dataset = NearDataset()
 
+    # Check initial few rows after preprocessing
+    print("Processed Data:")
     print(near_dataset.df.head())
+
+    # Check length of the dataset
+    print("Total Sequences:", len(near_dataset))
+
+    # Inspect a few sequences
+    for i in range(2):
+        sequence, label = near_dataset[i]
+        print(f"Sequence {i} Shape: {sequence.shape}, Label: {label}")
+
+    # Test with DataLoader
+    data_loader = DataLoader(near_dataset, batch_size=32, shuffle=True)
+    for batch in data_loader:
+        sequences, labels = batch
+        print("Batch of Sequences Shape:", sequences.shape)
+        print("Batch of Labels Shape:", labels.shape)
+        break  # Just to check the first batch
